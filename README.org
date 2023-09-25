@@ -1,0 +1,7 @@
+** `bald_aufstufen.py`
+
+Usage with NaMi export files:
+
+1. Download `Mitglieder Grundinformationen mit Tätigkeiten und Stufe Abteilung.xlsx` from NaMi. 
+2. Move this file into the `/data/in/` directory (where `/` is the repo root).
+3. Run `make` or the `run.sh` script from `/bin/`.
