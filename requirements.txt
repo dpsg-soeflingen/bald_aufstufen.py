@@ -1,0 +1,6 @@
+termcolor
+matplotlib
+numpy
+openpyxl
+pandas
+tqdm
