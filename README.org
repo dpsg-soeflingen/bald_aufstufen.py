@@ -2,6 +2,6 @@
 
 Usage with NaMi export files:
 
-1. Download `Mitglieder Grundinformationen mit Tätigkeiten und Stufe Abteilung.xlsx` from NaMi. 
-2. Move this file into the `/data/in/` directory (where `/` is the repo root).
-3. Run `make` or the `run.sh` script from `/bin/`.
+1. Download `Mitglieder Grundinformationen mit Tätigkeiten und Stufe Abteilung.xlsx` from NaMi. Make sure that the downloaded file has this name, you probably will have to rename it.
+3. Move the file into the `/data/in/` directory (where `/` is the repo root).
+4. Run `make` or the `run.sh` script from `/bin/`.
