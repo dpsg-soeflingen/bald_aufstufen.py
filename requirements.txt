@@ -4,3 +4,4 @@ numpy
 openpyxl
 pandas
 tqdm
+git+https://github.com/sscholz93/pynami.git
