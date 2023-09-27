@@ -1,28 +1,32 @@
+#!/usr/bin/env python3
+
 import datetime
+import getpass
+import math
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from datetime import datetime as dt
 from datetime import timedelta as td
-from dataclasses import dataclass
-import math
-from termcolor import colored
-from file_io import load_export
 
+from pynami.nami import NaMi
+from termcolor import colored
 
 AGE_GROUPS = {
-     "Wichtel": 0,
-     "Biber": 5,
-     "Wölfling": 7,
-     "Jungpfadfinder": 10,
-     "Pfadfinder": 13,
-     "Rover": 16,
-     "Leiter": 21,
+    "Wichtel": 0,
+    "Biber": 5,
+    "Wölfling": 7,
+    "Jungpfadfinder": 10,
+    "Pfadfinder": 13,
+    "Rover": 16,
+    "Leiter": 21,
 }
 STUFEN = list(AGE_GROUPS.keys())
-DATE_FMT =  "%Y-%m-%d"
-DAYS_PER_YEAR = 365.2425 
+DATE_FMT = "%Y-%m-%d"
+DAYS_PER_YEAR = 365.2425
 
 
 def age_from_birthday(birthday):
-    return (dt.now() - birthday).days / DAYS_PER_YEAR
+    return (dt.now().date() - birthday).days / DAYS_PER_YEAR
 
 
 def ist_zu_alt_fuer_die_stufe(stufe: str, age: float):
@@ -46,35 +50,41 @@ class Kind:
     stufe: str
 
 
+def get_current_activities(user, nami):
+    # NaMi will fuer diese Zuordnung die NaMi-interne ID. Das ist NICHT (immer) die Mitgliedsnummer!
+    activities = nami.mgl_activities(user.id)
+    current_activities = [act.taetigkeit for act in activities if not act.aktivBis]
+    return current_activities
+
+
 def main():
-    df = load_export()
+    username = input("Benutzername: ")
+    password = getpass.getpass("Passwort: ")
 
     # Alle Kinder im Stamm:
     kinder: dict[str, Kind] = {}
-    for _, row in df[1:].iterrows():
-        taetigkeit = row["Taetigkeit"]
-        if taetigkeit not in ["€ Mitglied", "€ LeiterIn"]:
-            continue
-        if str(row["Status"]).lower() != "aktiv":
-            continue
-
-        name = (str(row["Vorname"]), str(row["Nachname"]))
-        birthday = dt.strptime(str(row["GebDatum"]), DATE_FMT)
-        mitgliedsnummer = str(row["Mitgliedsnummer"])
-
-        stufe = str(row["Stufe_Abteilung"])
-        if taetigkeit == "€ LeiterIn":
-            stufe = "Leiter"
-        if stufe in ["Wahlausschuss"]:
-            continue
-
-        if mitgliedsnummer not in kinder:
-            kind = Kind(name, birthday, stufe)
-            kinder[mitgliedsnummer] = kind
-        else:
-            kind = kinder[mitgliedsnummer]
-            if AGE_GROUPS[stufe] > AGE_GROUPS[kind.stufe]:
-                kind.stufe = stufe
+    with NaMi(username=username, password=password) as nami:
+        # Suche nach allen aktiven Mitgliedern. Das ist relativ schnell.
+        active_members = nami.search(mglTypeId="MITGLIED", mglStatusId="AKTIV")
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            # Standardmaessig wird eine recht kompakte Version von Mitgliedsinformationen
+            # zurueckgegeben. Leider muss jetzt fuer jede Person einzeln die komplette
+            # Information eingefordert werden, um z.B. das Geburtsdatum zu erhalten.
+            # Deswegen passiert das multi-threaded.
+            futures = [
+                executor.submit(member.get_mitglied, nami) for member in active_members
+            ]
+            for future in as_completed(futures):
+                member = future.result()
+                stufe = member.stufe
+                current_activities = get_current_activities(member, nami)
+                if "LeiterIn" in "|".join(current_activities):
+                    stufe = "Leiter"
+                elif "Wahlausschuss" in current_activities:
+                    continue
+                kinder[member.mitgliedsNummer] = Kind(
+                    (member.vorname, member.nachname), member.geburtsDatum, stufe
+                )
 
     # Erst Kinder, sortiert nach Stufen:
     stufen: dict[str, list[Kind]] = {
@@ -88,12 +98,11 @@ def main():
     # Info ueber aufzustufende Kinder, stufenweise:
     COL_BREAKS = [38, 52, 65]
     for stufe, stufen_kinder in list(stufen.items())[:-1]:
-
         text = f"{stufe.upper()}"
         text += (COL_BREAKS[0] - len(text)) * " "
         text += "Geboren am"
         text += (COL_BREAKS[1] - len(text)) * " "
-        text += f"Alter"
+        text += "Alter"
         text += (COL_BREAKS[2] - len(text)) * " "
         text += f"wann {AGE_GROUPS[STUFEN[STUFEN.index(stufe) + 1]]}?"
         print(f"\n{text}")
@@ -101,11 +110,11 @@ def main():
         for kind in stufen_kinder:
             birthday = kind.birthday
             age = age_from_birthday(birthday)
-            muss_aufgestuft_werden = ist_zu_alt_fuer_die_stufe(stufe, age) 
+            muss_aufgestuft_werden = ist_zu_alt_fuer_die_stufe(stufe, age)
             kann_aufgestuft_werden = ist_zu_alt_fuer_die_stufe(stufe, age + 0.5)
             # ^ NOTE: "muss" & "kann" sind natuerlich keine verbindlichen Begriffe hier...
             color = "yellow" if kann_aufgestuft_werden else "white"
-            color = "red" if muss_aufgestuft_werden else color 
+            color = "red" if muss_aufgestuft_werden else color
 
             vorname, nachname = kind.name
             text = f"{nachname}, {vorname}"
@@ -120,7 +129,9 @@ def main():
             if kann_aufgestuft_werden:
                 text += (COL_BREAKS[2] - len(text)) * " "
                 deadline_age = AGE_GROUPS[STUFEN[STUFEN.index(stufe) + 1]]
-                text += (birthday + td(days=deadline_age*DAYS_PER_YEAR)).strftime(DATE_FMT)
+                text += (birthday + td(days=deadline_age * DAYS_PER_YEAR)).strftime(
+                    DATE_FMT
+                )
 
             print(colored(text, color))
 
