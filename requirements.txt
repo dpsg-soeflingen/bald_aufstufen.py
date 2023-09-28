@@ -3,4 +3,5 @@ matplotlib
 numpy
 openpyxl
 pandas
+pretty_errors
 tqdm

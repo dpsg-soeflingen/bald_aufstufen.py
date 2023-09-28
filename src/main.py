@@ -3,6 +3,7 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 from dataclasses import dataclass
 import math
+import pretty_errors
 from termcolor import colored
 from file_io import load_export
 
