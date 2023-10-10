@@ -2,7 +2,7 @@
 
 To use the TUI visualization script, follow these steps:
 
-*** Install dependencies.
+*** Install the following dependencies:
 - Python 3
 - the `make` utility (optional)
 
