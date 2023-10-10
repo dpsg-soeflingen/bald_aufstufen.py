@@ -1,7 +1,39 @@
 ** `bald_aufstufen.py`
 
-Usage with NaMi export files:
+To use the TUI visualization script, follow these steps:
 
-1. Download `Mitglieder Grundinformationen mit Tätigkeiten und Stufe Abteilung.xlsx` from NaMi. Make sure that the downloaded file has this name, you probably will have to rename it.
-3. Move the file into the `/data/in/` directory (where `/` is the repo root).
-4. Run `make` or the `run.sh` script from `/bin/`.
+**** Install dependencies.
+- Python 3
+- the `make` utility (optional)
+
+**** Setup the virtual environment for Python.
+If you have the `make` utility installed, run
+#+begin_src shell
+    make setup
+#+end_src
+Otherwise:
+#+begin_src shell
+    cd bin && ./setup.sh
+#+end_src
+This will create a virtual environment for Python, and 
+install the dependencies listed in `requirements.txt`.
+
+**** Download the NaMi export files.
+In the (near?) future, this will likely be done automatically using 
+the `pynami` Python package. For now though, download the file 
+`Mitglieder Grundinformationen mit Tätigkeiten und Stufe Abteilung.xlsx` 
+from NaMi. Make sure that the downloaded file has exactly this name, 
+you probably will have to rename it.
+
+**** Move the file into the `/data/in/` directory.
+Here, `/` labels the repository root directory.
+
+**** Run the visualization script.
+If you have the `make` utility installed, run
+#+begin_src shell
+    make 
+#+end_src
+Otherwise:
+#+begin_src shell
+    cd bin && ./run.sh
+#+end_src
