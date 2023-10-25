@@ -25,7 +25,7 @@ the `pynami` Python package. For now though, download the file
 from NaMi. Make sure that the downloaded file has exactly this name, 
 you probably will have to rename it.
 
-** Move the file into the `/data/in/` directory.
+** Move the file into the `/data/nami-exports` directory.
 Here, `/` labels the repository root directory.
 
 ** Run the visualization script.

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Create directory for NaMi `.xlsx` export files.
-mkdir -p ../data/in
+mkdir -p ../data/nami-exports
 
 # Create new virtual environment for python, if not already done.
 [ -d ../.venv ] || python3 -m virtualenv ../.venv

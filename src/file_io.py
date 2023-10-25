@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 
 
-PATH_TO_EXPORTS = Path("..", "data", "in", "exports")
+PATH_TO_EXPORTS = Path("..", "data", "nami-exports")
 
 
 def load_excel_file(path):
